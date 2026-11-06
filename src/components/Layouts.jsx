@@ -5,7 +5,6 @@ import Sidebar from "./Sidebar";
 import VerifyBanner from "./VerifyBanner";
 import { useAuth } from "../context/AuthContext";
 
-// Public and guest pages: header, page, footer.
 export function PublicLayout() {
   return (
     <div className="app-shell">
@@ -17,7 +16,6 @@ export function PublicLayout() {
   );
 }
 
-// Host and admin pages: header and a left sidebar, no footer.
 export function DashboardLayout() {
   const { user } = useAuth();
   return (

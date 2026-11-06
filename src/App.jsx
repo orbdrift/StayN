@@ -39,7 +39,7 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
-        <Route path="/not-allowed" element={<NotAllowed />} />        {/* Any logged-in user */}
+        <Route path="/not-allowed" element={<NotAllowed />} />
         <Route element={<ProtectedRoute />}>
           <Route path="/reservations" element={<Reservations />} />
           <Route path="/reservations/:id" element={<ReservationDetails />} />
@@ -51,7 +51,6 @@ export default function App() {
         <Route path="*" element={<NotFound />} />
       </Route>
 
-      {/* Host dashboard */}
       <Route element={<ProtectedRoute roles={["host"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/host" element={<HostDashboard />} />
@@ -66,7 +65,6 @@ export default function App() {
         </Route>
       </Route>
 
-      {/* Admin dashboard */}
       <Route element={<ProtectedRoute roles={["admin"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/admin" element={<AdminDashboard />} />

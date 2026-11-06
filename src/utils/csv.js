@@ -1,5 +1,3 @@
-// Builds a CSV file in the browser and downloads it. `rows` is an array of arrays (header row first).
-// A BOM is added so Excel reads the peso sign and accents correctly.
 const cell = (v) => {
   const s = v === null || v === undefined ? "" : String(v);
   return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;

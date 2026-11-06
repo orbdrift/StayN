@@ -1,14 +1,11 @@
 import { addDays, nightsBetween } from "../utils/dates";
 import { priceBreakdown } from "../utils/price";
 
-// Demo data that mirrors the Firestore collections in StayN-Data-Model.
-// Photos are placeholder color tiles for now (see components/Photo.jsx).
-
 export const settings = {
   propertyTypes: ["House", "Condo", "Apartment", "Beach house", "Cabin", "Resort stay"],
   amenities: ["Wi-Fi", "Air conditioning", "Kitchen", "Parking", "Pool", "Beach access", "Hot shower", "TV"],
   serviceFeePercent: 10,
-  listingFee: 500, // one-time fee a host pays for each property they post
+  listingFee: 500,
 };
 
 export const destinations = [
@@ -58,11 +55,9 @@ export const properties = [
   P("p10", "Old Moalboal House", "House", "Cebu", "u_paolo", "Paolo Reyes", 1900, 200, 3, 1, 1, "inactive", ["Wi-Fi", "Kitchen"], "Moalboal, Cebu", 9.95, 123.4, 3),
 ];
 
-// How many pets each place accepts (0 = no pets).
 const petLimits = { p1: 2, p3: 3, p4: 1, p6: 2, p8: 2, p13: 1 };
 properties.forEach((x) => { x.maxPets = petLimits[x.id] || 0; });
 
-// Use the local public images for the Tagaytay and Cebu listings.
 properties[0].images = ["/T1.jpg", "/T2.jpg", "/T3.jpg", "/T4.jpg", "/T5.jpg"];
 properties[0].imageCount = properties[0].images.length;
 properties[1].images = ["/TT1.jpg", "/TT2.jpg", "/TT3.jpg", "/TT4.jpg", "/TT5.jpg"];
@@ -80,7 +75,6 @@ properties[6].imageCount = properties[6].images.length;
 properties[7].images = ["/SS1.jpg", "/SS2.jpg", "/SS3.jpg", "/SS4.jpg", "/SS5.jpg"];
 properties[7].imageCount = properties[7].images.length;
 
-// Block a few days on the first property so the availability calendar has something to show.
 properties[0].blockedRanges = [{ start: addDays(20), end: addDays(23) }];
 
 const fee = settings.serviceFeePercent;
@@ -106,7 +100,6 @@ export const bookings = [
   B("b5", "p5", "u_ana", -28, 3, "completed"),
   B("b6", "p2", "u_ben", 32, 2, "rejected"),
   B("b7", "p8", "u_ana", 34, 1, "cancelled", { cancelledBy: "guest" }),
-  // Older paid stays so the monthly sales report has several months to show.
   B("b8", "p3", "u_ben", -62, 3, "completed", { adults: 3, kids: 1, guests: 4 }),
   B("b9", "p2", "u_ana", -95, 2, "completed"),
   B("b10", "p7", "u_ana", -9, 2, "completed"),
@@ -118,14 +111,12 @@ export const payments = [
   { id: "b5", bookingId: "b5", guestId: "u_ana", hostId: "u_maria", amount: bookings[4].total, method: "GCash", gcashNumber: "09171234567", accountName: "Ana Cruz", referenceNumber: "GC-20480555", paidAt: addDays(-33), status: "paid" },
 ];
 
-// Paid stays added for the sales report (the guest's phone is used as the GCash number).
 const paid = (bookingId, daysAgo, ref) => {
   const b = bookings.find((x) => x.id === bookingId);
   return { id: bookingId, bookingId, guestId: b.guestId, hostId: b.hostId, amount: b.total, method: "GCash", gcashNumber: b.guestPhone, accountName: b.guestName, referenceNumber: ref, paidAt: addDays(-daysAgo), status: "paid" };
 };
 payments.push(paid("b8", 70, "GC-20479001"), paid("b9", 100, "GC-20478442"), paid("b10", 14, "GC-20481644"));
 
-// One listing fee per posted property, paid when the host submitted it.
 const feeDays = { p1: 180, p2: 160, p3: 150, p4: 140, p5: 120, p6: 100, p7: 90, p8: 75, p9: 1, p10: 60 };
 export const listingFees = properties.map((p) => ({
   id: `lf_${p.id}`, propertyId: p.id, propertyTitle: p.title, hostId: p.hostId, hostName: p.hostName, amount: settings.listingFee,

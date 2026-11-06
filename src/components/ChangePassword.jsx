@@ -6,8 +6,6 @@ import { useAuth } from "../context/AuthContext";
 
 const empty = { current: "", next: "", confirm: "" };
 
-// Used on the guest Profile page and the Host Profile page.
-// The form is checked first, then a dialog asks to confirm, then the password is changed and a message says so.
 export default function ChangePassword() {
   const { changePassword } = useAuth();
   const [f, setF] = useState(empty);

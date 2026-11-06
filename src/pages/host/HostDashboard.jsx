@@ -19,7 +19,6 @@ export function StatCard({ label, value, hint }) {
   );
 }
 
-// Host earnings = nightly total + cleaning fee on paid bookings (the service fee stays with StayN).
 export const hostEarning = (b) => b.subtotal + b.cleaningFee;
 
 export default function HostDashboard() {

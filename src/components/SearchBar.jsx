@@ -5,8 +5,6 @@ import GuestPicker from "./GuestPicker";
 import { useData } from "../context/DataContext";
 import { destinations } from "../data/sampleData";
 
-// Controlled by the parent through `value` and `onSearch`.
-// Fields: destination, category, dates, guests (adults, kids, pets), max price.
 export default function SearchBar({ value, onSearch, compact = false }) {
   const { settings } = useData();
   const [f, setF] = useState(value);

@@ -1,4 +1,3 @@
-// Dates are kept as YYYY-MM-DD text so date math stays simple.
 export const toISO = (d) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -22,7 +21,6 @@ export const todayISO = () => toISO(new Date());
 export const nightsBetween = (checkIn, checkOut) =>
   Math.round((parseISO(checkOut) - parseISO(checkIn)) / 86400000);
 
-// Two stays overlap when each starts before the other ends (check-out day is free).
 export const overlaps = (aStart, aEnd, bStart, bEnd) => aStart < bEnd && bStart < aEnd;
 
 export const formatShort = (iso) =>

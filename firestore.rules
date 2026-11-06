@@ -1,7 +1,5 @@
 rules_version = '2';
 
-// StayN security rules. The React pages hide what a user may not do; these rules enforce it.
-// Roles live in users/{uid}.role: guest, host, admin.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -38,7 +36,6 @@ service cloud.firestore {
       allow read: if resource.data.status == 'approved' || owns('hostId') || isAdmin();
       allow create: if isAdmin() || (isHost() && request.resource.data.hostId == request.auth.uid
         && request.resource.data.status == 'pending');
-      // A host may switch approved and inactive, but only the admin approves or rejects.
       allow update: if isAdmin() || (isHost() && owns('hostId')
         && request.resource.data.hostId == resource.data.hostId
         && (request.resource.data.status == resource.data.status
@@ -46,7 +43,6 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isHost() && owns('hostId'));
     }
 
-    // Title documents: only the host and the admin can read them.
     match /propertyDocs/{propertyId} {
       allow read: if owns('hostId') || isAdmin();
       allow create: if isAdmin() || (isHost() && request.resource.data.hostId == request.auth.uid);
@@ -54,7 +50,6 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isHost() && owns('hostId'));
     }
 
-    // One document per property listing its active stays. Anyone can check dates; the booking code keeps it in step.
     match /availability/{propertyId} {
       allow read: if true;
       allow write: if signedIn();
@@ -70,21 +65,17 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.status == 'approved'
         && get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.hostId == request.resource.data.hostId);
       allow update: if isAdmin()
-        // the host accepts or rejects a pending request
         || (owns('hostId') && resource.data.status == 'pending'
             && request.resource.data.status in ['awaiting_payment', 'rejected']
             && changed().hasOnly(['status', 'updatedAt']))
-        // the guest cancels before paying
         || (owns('guestId') && resource.data.status in ['pending', 'awaiting_payment']
             && request.resource.data.status == 'cancelled'
             && request.resource.data.cancelledBy == 'guest'
             && changed().hasOnly(['status', 'updatedAt', 'cancelledBy']))
-        // the guest pays: the payment is saved in the same step
         || (owns('guestId') && resource.data.status == 'awaiting_payment'
             && request.resource.data.status == 'confirmed'
             && existsAfter(/databases/$(database)/documents/payments/$(bookingId))
             && changed().hasOnly(['status', 'updatedAt']))
-        // the guest marks the stay as reviewed
         || (owns('guestId') && resource.data.status in ['confirmed', 'completed'] && changed().hasOnly(['reviewed']));
     }
 
@@ -104,8 +95,6 @@ service cloud.firestore {
       allow update: if isAdmin();
     }
 
-    // Reviews: anyone can read. Only the guest of a finished stay can write one (the document id is the booking id,
-    // so there is one review per booking). The admin can hide or delete any review.
     match /reviews/{bookingId} {
       allow read: if true;
       allow create: if isAdmin() || (signedIn()
@@ -123,7 +112,6 @@ service cloud.firestore {
       allow delete: if isAdmin() || owns('guestId');
     }
 
-    // Notifications are written by the app for another user. Admin notices use userId 'admin'.
     match /notifications/{noteId} {
       allow read: if signedIn() && (resource.data.userId == request.auth.uid || (resource.data.userId == 'admin' && isAdmin()));
       allow create: if isAdmin() || (signedIn() && request.resource.data.read == false);

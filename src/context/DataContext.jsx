@@ -5,10 +5,6 @@ import { db } from "../firebase";
 import { useAuth } from "./AuthContext";
 import { overlaps, todayISO } from "../utils/dates";
 
-// Live data from Cloud Firestore (see StayN-Data-Model). Each user only reads what they may see:
-// everyone gets approved properties, reviews, settings and the busy dates; a guest also gets their own bookings;
-// a host gets their own properties and bookings; an admin gets everything. Security rules enforce the same limits.
-// The functions below are what the pages call. They write to Firestore, and the listeners update the screens.
 const DataContext = createContext(null);
 
 const defaultSettings = {
@@ -21,8 +17,6 @@ const defaultSettings = {
 const ref = () => `GC-${Math.floor(10000000 + Math.random() * 89999999)}`;
 const merge = (...lists) => [...new Map(lists.flat().map((x) => [x.id, x])).values()];
 
-// Listens to one query. `makeQuery` returns a Firestore query, or a falsy value when this user may not read it.
-// `setLoaded` records when the first answer arrived, so pages can wait for data before they redirect.
 function useLive(name, makeQuery, deps, setLoaded) {
   const [rows, setRows] = useState([]);
   useEffect(() => {
@@ -35,7 +29,7 @@ function useLive(name, makeQuery, deps, setLoaded) {
       (s) => { setRows(s.docs.map((d) => ({ ...d.data(), id: d.id }))); done(); },
       (e) => { console.error("Firestore read failed:", e.message); done(); },
     );
-  }, deps); // eslint-disable-line react-hooks/exhaustive-deps
+  }, deps);
   return rows;
 }
 const LIVE_COUNT = 18;
@@ -59,22 +53,18 @@ export function DataProvider({ children }) {
 
   const c = (name) => collection(db, name);
   const [loaded, setLoaded] = useState({});
-  const live = (name, make, deps) => useLive(name, make, deps, setLoaded); // eslint-disable-line react-hooks/rules-of-hooks
-  // Everyone
+  const live = (name, make, deps) => useLive(name, make, deps, setLoaded);
   const approved = live("approved", () => query(c("properties"), where("status", "==", "approved")), []);
   const reviews = live("reviews", () => c("reviews"), []);
   const availability = live("availability", () => c("availability"), []);
-  // Any signed-in user
   const myNotes = live("myNotes", () => uid && query(c("notifications"), where("userId", "==", uid)), [uid]);
   const guestBookings = live("guestBookings", () => uid && query(c("bookings"), where("guestId", "==", uid)), [uid]);
   const guestPayments = live("guestPayments", () => uid && query(c("payments"), where("guestId", "==", uid)), [uid]);
-  // Hosts
   const hostProps = live("hostProps", () => isHost && query(c("properties"), where("hostId", "==", uid)), [isHost, uid]);
   const hostBookings = live("hostBookings", () => isHost && query(c("bookings"), where("hostId", "==", uid)), [isHost, uid]);
   const hostPayments = live("hostPayments", () => isHost && query(c("payments"), where("hostId", "==", uid)), [isHost, uid]);
   const hostFees = live("hostFees", () => isHost && query(c("listingFees"), where("hostId", "==", uid)), [isHost, uid]);
   const hostDocs = live("hostDocs", () => isHost && query(c("propertyDocs"), where("hostId", "==", uid)), [isHost, uid]);
-  // Admin
   const adminUsers = live("adminUsers", () => isAdmin && c("users"), [isAdmin]);
   const adminApps = live("adminApps", () => isAdmin && c("hostApplications"), [isAdmin]);
   const adminProps = live("adminProps", () => isAdmin && c("properties"), [isAdmin]);
@@ -83,7 +73,6 @@ export function DataProvider({ children }) {
   const adminFees = live("adminFees", () => isAdmin && c("listingFees"), [isAdmin]);
   const adminDocs = live("adminDocs", () => isAdmin && c("propertyDocs"), [isAdmin]);
   const adminNotes = live("adminNotes", () => isAdmin && query(c("notifications"), where("userId", "==", "admin")), [isAdmin]);
-  // True once every list has had its first answer (pages wait for this before they redirect).
   const ready = Object.keys(loaded).length >= LIVE_COUNT && Object.values(loaded).every(Boolean);
 
   const docsById = useMemo(
@@ -97,13 +86,11 @@ export function DataProvider({ children }) {
   const bookings = useMemo(() => merge(guestBookings, hostBookings, adminBookings), [guestBookings, hostBookings, adminBookings]);
   const payments = useMemo(() => merge(guestPayments, hostPayments, adminPayments), [guestPayments, hostPayments, adminPayments]);
   const listingFees = useMemo(() => merge(hostFees, adminFees), [hostFees, adminFees]);
-  // Admin notifications are stored for the whole admin team (userId "admin"); each admin sees them as their own.
   const notifications = useMemo(
     () => merge(myNotes, adminNotes.map((n) => ({ ...n, userId: uid })))
       .sort((a, b) => (b.ts || 0) - (a.ts || 0) || (b.createdAt || "").localeCompare(a.createdAt || "")),
     [myNotes, adminNotes, uid],
   );
-  // One row per active stay, so anyone can check availability without reading other people's bookings.
   const busy = useMemo(
     () => availability.flatMap((a) => (a.ranges || []).map((r) => ({ propertyId: a.id, checkIn: r.start, checkOut: r.end, status: r.status }))),
     [availability],
@@ -142,7 +129,6 @@ export function DataProvider({ children }) {
       ),
       updateApplication: (id, changes) => guard(setDoc(doc(db, "hostApplications", id), changes, { merge: true })),
 
-      // Editing patches the property. A new property also takes a listing fee payment ({ gcashNumber, accountName }).
       saveProperty: (p, listingPayment) => {
         const { titleDocument, ...fields } = p;
         if (p.id) {
@@ -175,7 +161,6 @@ export function DataProvider({ children }) {
         const prop = properties.find((x) => x.id === id);
         return guard(Promise.all([
           updateDoc(doc(db, "properties", id), { status, rejectReason }),
-          // A rejected property gets its listing fee back (label only, no money moves).
           status === "rejected" && updateDoc(doc(db, "listingFees", id), { status: "refunded" }).catch(() => {}),
         ]).then(() => {
           if (prop && (status === "approved" || status === "rejected"))
@@ -189,8 +174,6 @@ export function DataProvider({ children }) {
         return guard(batch.commit());
       },
 
-      // The availability document holds every active stay of a property, so the overlap check and the new booking
-      // are saved in one transaction. Two guests cannot take the same dates.
       createBooking: async ({ property, checkIn, checkOut, adults, kids, pets, user: guest, price }) => {
         const id = doc(c("bookings")).id;
         const availRef = doc(db, "availability", property.id);
@@ -219,7 +202,6 @@ export function DataProvider({ children }) {
         return guard(runTransaction(db, async (tx) => {
           const avail = await tx.get(availRef);
           let ranges = avail.exists() ? avail.data().ranges || [] : [];
-          // A rejected or cancelled stay frees its dates; any other change keeps them with the new status.
           ranges = ["rejected", "cancelled"].includes(status) ? ranges.filter((r) => r.bookingId !== id) : ranges.map((r) => (r.bookingId === id ? { ...r, status } : r));
           tx.update(doc(db, "bookings", id), { status, ...extra, updatedAt: todayISO() });
           if (avail.exists()) tx.set(availRef, { ranges });
@@ -256,7 +238,6 @@ export function DataProvider({ children }) {
         return guard(batch.commit().then(() => notify(r.hostId, "New review", `${r.guestName} left a ${r.rating}-star review.`, "/host/reviews")));
       },
       updateReview: (id, changes) => guard(updateDoc(doc(db, "reviews", id), changes)),
-      // A guest deleting their own review can write a new one afterwards.
       deleteMyReview: (reviewId, bookingId) => {
         const batch = writeBatch(db);
         batch.delete(doc(db, "reviews", reviewId));
@@ -274,7 +255,7 @@ export function DataProvider({ children }) {
 
       updateSettings: (changes) => guard(setDoc(doc(db, "settings", "platform"), changes, { merge: true })),
     };
-  }, [ready, adminUsers, adminApps, properties, bookings, busy, payments, listingFees, reviews, notifications, settings]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ready, adminUsers, adminApps, properties, bookings, busy, payments, listingFees, reviews, notifications, settings]);
 
   return (
     <DataContext.Provider value={value}>

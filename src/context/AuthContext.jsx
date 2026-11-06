@@ -8,8 +8,6 @@ import { doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "../firebase";
 import { todayISO } from "../utils/dates";
 
-// Firebase Authentication (email and password) plus the users/{uid} profile document.
-// `user` is the profile with the role; `application` is the host application of the same user.
 const AuthContext = createContext(null);
 
 const friendly = (e) => ({
@@ -25,8 +23,8 @@ const friendly = (e) => ({
 }[e.code] || "Something went wrong. Please try again.");
 
 export function AuthProvider({ children }) {
-  const [fbUser, setFbUser] = useState(undefined); // undefined while Firebase checks the saved session
-  const [profile, setProfile] = useState(undefined); // undefined until the users document is read
+  const [fbUser, setFbUser] = useState(undefined);
+  const [profile, setProfile] = useState(undefined);
   const [application, setApplication] = useState(null);
 
   useEffect(() => onAuthStateChanged(auth, (u) => {
@@ -50,13 +48,11 @@ export function AuthProvider({ children }) {
     return () => { stopProfile(); stopApplication(); };
   }, [fbUser?.uid]);
 
-  // Once Firebase knows the email is verified, copy that to the profile.
   useEffect(() => {
     if (fbUser?.emailVerified && profile && profile.emailVerified === false)
       updateDoc(doc(db, "users", fbUser.uid), { emailVerified: true }).catch(() => {});
   }, [fbUser, profile]);
 
-  // A suspended account is signed out right away (login() handles its own suspended message while it runs).
   const loggingIn = useRef(false);
   useEffect(() => { if (profile?.status === "suspended" && !loggingIn.current) signOut(auth); }, [profile?.status]);
 
@@ -120,7 +116,6 @@ export function AuthProvider({ children }) {
     catch (e) { return { ok: false, error: friendly(e) }; }
   };
 
-  // Reads the latest verification state from Firebase (after the guest clicked the link in the email).
   const refreshVerification = async () => {
     const u = auth.currentUser;
     if (!u) return false;

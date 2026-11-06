@@ -8,7 +8,6 @@ import { useData } from "../../context/DataContext";
 import { useAuth } from "../../context/AuthContext";
 import { peso } from "../../utils/price";
 
-// Simulated GCash payment: no real money moves.
 export default function Payment() {
   const { id } = useParams();
   const { ready, bookings, settings, payBooking } = useData();
@@ -31,7 +30,7 @@ export default function Payment() {
     if (!/^09\d{9}$/.test(number)) return setError("Enter an 11-digit GCash number that starts with 09.");
     if (!name.trim()) return setError("Enter the account name.");
     if (!/^\d{4}$/.test(pin)) return setError("Enter your 4-digit MPIN.");
-    setPaid(true); // keeps the redirect guard above from swallowing the "paid" message
+    setPaid(true);
     payBooking(booking.id, { gcashNumber: number, accountName: name.trim() });
     navigate(`/reservations/${booking.id}?paid=1`);
   };

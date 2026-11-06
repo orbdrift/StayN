@@ -7,7 +7,6 @@ import EmptyState from "../../components/EmptyState";
 import { useData } from "../../context/DataContext";
 import { overlaps } from "../../utils/dates";
 
-// A stay is free when no active booking or blocked range overlaps the chosen dates.
 export function isAvailable(property, bookings, checkIn, checkOut) {
   if (!checkIn || !checkOut || checkOut <= checkIn) return true;
   const busy = bookings.some((b) => b.propertyId === property.id && ["pending", "awaiting_payment", "confirmed"].includes(b.status) && overlaps(checkIn, checkOut, b.checkIn, b.checkOut));

@@ -16,7 +16,6 @@ export default function HostProfile() {
   const [msg, setMsg] = useState({ type: "", text: "" });
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
-  // The photo is shrunk to a small picture and saved as text on the user.
   const pickPhoto = async (e) => {
     const file = e.target.files[0];
     e.target.value = "";

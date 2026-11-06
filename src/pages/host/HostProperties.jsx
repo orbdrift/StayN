@@ -17,7 +17,6 @@ export default function HostProperties() {
   const [target, setTarget] = useState(null);
   const mine = properties.filter((p) => p.hostId === user.id);
 
-  // A property with open or future bookings cannot be deleted.
   const hasOpenBookings = (p) => bookings.some((b) => b.propertyId === p.id && ["pending", "awaiting_payment", "confirmed"].includes(b.status) && b.checkOut >= todayISO());
 
   return (

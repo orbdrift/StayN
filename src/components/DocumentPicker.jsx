@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Button, Typography } from "@mui/material";
 import { checkFile, readFile } from "../utils/files";
 
-// Upload box for one required document (ID, property title). Accepts JPG, PNG, WEBP or PDF up to 5 MB.
 export default function DocumentPicker({ label, hint, value, onChange, error }) {
   const [problem, setProblem] = useState("");
 

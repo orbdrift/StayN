@@ -11,8 +11,6 @@ export default function AdminHosts() {
   const pending = applications.filter((a) => a.status === "pending");
   const hosts = applications.filter((a) => ["approved", "deactivated"].includes(a.status));
 
-  // Deactivating removes host access and hides the host's live stays (they become Inactive); reactivating restores
-  // host access, and the host switches their stays back on.
   const deactivate = (a) => {
     updateApplication(a.id, { status: "deactivated" });
     updateUser(a.id, { role: "guest" });

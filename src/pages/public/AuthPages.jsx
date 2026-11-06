@@ -22,7 +22,6 @@ const demoAccounts = [
   { label: "Host (Maria)", email: "maria.host@stayn.test" },
   { label: "Admin", email: "admin@stayn.test" },
 ];
-// The sample accounts are real Firebase accounts that share this password (see StayN-Sample-Data).
 const DEMO_PASSWORD = "Demo#1234";
 
 export function Login() {

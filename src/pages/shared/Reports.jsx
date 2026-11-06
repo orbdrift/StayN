@@ -13,14 +13,10 @@ import { peso } from "../../utils/price";
 import { downloadCSV } from "../../utils/csv";
 import { formatLong, toISO, todayISO } from "../../utils/dates";
 
-// Reports for hosts (their own properties) and for the admin (the whole platform).
-// Tabs: monthly sales, bookings, properties. Each can be downloaded as CSV or printed / saved as PDF.
-
 const monthOf = (iso) => (iso || "").slice(0, 7);
 const monthLabel = (m, style = "long") => new Date(`${m}-01T00:00:00`).toLocaleDateString("en-PH", style === "long" ? { month: "long", year: "numeric" } : { month: "short", year: "2-digit" });
 const sum = (list, pick) => list.reduce((s, x) => s + pick(x), 0);
 
-// The last `n` months, newest first, as YYYY-MM.
 const lastMonths = (n) => {
   const now = new Date();
   return Array.from({ length: n }, (_, i) => toISO(new Date(now.getFullYear(), now.getMonth() - i, 1)).slice(0, 7));
@@ -50,7 +46,6 @@ function ReportTable({ columns, rows, totals }) {
   );
 }
 
-// Raw values (no peso signs) for the CSV file.
 const csvRows = (columns, rows, totals) => [
   columns.map((c) => c.label),
   ...rows.map((r) => columns.map((c) => r[c.key])),
@@ -65,15 +60,13 @@ export default function Reports({ scope }) {
   const [month, setMonth] = useState(todayISO().slice(0, 7));
   const [status, setStatus] = useState("");
 
-  // Hosts only ever see their own numbers.
   const mineProps = properties.filter((p) => admin || p.hostId === user.id);
   const mineBookings = bookings.filter((b) => admin || b.hostId === user.id);
   const minePayments = payments.filter((p) => admin || p.hostId === user.id);
   const mineFees = listingFees.filter((f) => admin || f.hostId === user.id);
   const hostName = (id) => properties.find((p) => p.id === id)?.hostName || "";
 
-  // ---- Monthly sales ----
-  const earned = (b) => b.subtotal + b.cleaningFee; // what the host keeps; the service fee stays with StayN
+  const earned = (b) => b.subtotal + b.cleaningFee;
   const saleRows = minePayments
     .filter((p) => p.status === "paid" && monthOf(p.paidAt) === month)
     .map((p) => {
@@ -90,7 +83,7 @@ export default function Reports({ scope }) {
     .filter((f) => monthOf(f.paidAt) === month)
     .map((f) => ({ id: f.id, paidAt: f.paidAt, ref: f.referenceNumber, property: f.propertyTitle, host: f.hostName, amount: f.amount, status: f.status }))
     .sort((a, b) => a.paidAt.localeCompare(b.paidAt));
-  const feesPaid = sum(feeRows.filter((f) => f.status === "paid"), (f) => f.amount); // refunded fees are not counted
+  const feesPaid = sum(feeRows.filter((f) => f.status === "paid"), (f) => f.amount);
 
   const saleCols = [
     { key: "paidAt", label: "Paid on" }, { key: "ref", label: "Reference" }, { key: "property", label: "Property" },
@@ -109,11 +102,9 @@ export default function Reports({ scope }) {
   const monthly = lastMonths(12).reverse().map((m) => {
     const sales = minePayments.filter((p) => p.status === "paid" && monthOf(p.paidAt) === m).map((p) => bookings.find((b) => b.id === p.bookingId)).filter(Boolean);
     const fees = sum(mineFees.filter((f) => f.status === "paid" && monthOf(f.paidAt) === m), (f) => f.amount);
-    // Hosts: what they earned. Admin: what StayN keeps (service fees + listing fees).
     return { label: monthLabel(m, "short"), value: admin ? sum(sales, (b) => b.serviceFee) + fees : sum(sales, earned) };
   });
 
-  // ---- Bookings (by check-in month) ----
   const bookingRows = mineBookings
     .filter((b) => monthOf(b.checkIn) === month && (!status || b.status === status))
     .sort((a, b) => a.checkIn.localeCompare(b.checkIn))
@@ -129,7 +120,6 @@ export default function Reports({ scope }) {
     { key: "status", label: "Status", badge: true }, { key: "total", label: "Total", money: true },
   ];
 
-  // ---- Properties (all time) ----
   const propertyRows = mineProps.map((p) => {
     const paidBookings = minePayments.filter((x) => x.status === "paid" && x.bookingId && bookings.find((b) => b.id === x.bookingId)?.propertyId === p.id);
     return {

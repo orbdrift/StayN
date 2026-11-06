@@ -1,6 +1,5 @@
 import { Chip } from "@mui/material";
 
-// Colors come from the "Status colors (badges)" table in StayN-Design-Tokens.
 const STYLES = {
   pending: ["Pending", "#FFF1D6", "#8A5A00"],
   awaiting_payment: ["Waiting for payment", "#E3F2EF", "#146C60"],

@@ -2,7 +2,6 @@ import { useState } from "react";
 import MailOutlinedIcon from "@mui/icons-material/MailOutlined";
 import { useAuth } from "../context/AuthContext";
 
-// Shown above every page until the email is verified.
 export default function VerifyBanner() {
   const { user, resendVerification, refreshVerification } = useAuth();
   const [sent, setSent] = useState(false);

@@ -27,7 +27,6 @@ export default function HostBookings() {
   const list = mine.filter((b) => tabOf(b) === tab);
   const counts = { pending: mine.filter((b) => tabOf(b) === "pending").length };
 
-  // Accepting checks that no other accepted or paid stay overlaps (the Firestore step makes this a transaction).
   const accept = (b) => {
     setError("");
     const clash = bookings.some((o) => o.id !== b.id && o.propertyId === b.propertyId && ["awaiting_payment", "confirmed"].includes(o.status) && overlaps(b.checkIn, b.checkOut, o.checkIn, o.checkOut));

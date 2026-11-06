@@ -16,7 +16,6 @@ export default function Profile() {
   const [photo, setPhoto] = useState(user.photoURL || "");
   const [msg, setMsg] = useState({ type: "", text: "" });
 
-  // The photo is shrunk to a small square-ish picture and saved as text on the user.
   const pickPhoto = async (e) => {
     const file = e.target.files[0];
     e.target.value = "";

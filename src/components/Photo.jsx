@@ -1,4 +1,3 @@
-// Placeholder photo tile. Real photos are added in the Firebase step (see StayN-Tech-Stack, photos).
 const TONES = [
   ["#d9e8e3", "#b9d6cd"], ["#f4e3cf", "#ecc9a3"], ["#d6e4ee", "#b3cde0"], ["#e7ddf0", "#cfbfe3"],
   ["#f6dcd3", "#eebaa8"], ["#dcebd3", "#bfd9ae"], ["#f7ecc6", "#efd98e"], ["#d3ebea", "#a9d8d5"],
@@ -6,7 +5,6 @@ const TONES = [
 
 export default function Photo({ tone = 0, ratio = "4 / 3", radius = 12, label, sx = {}, height, src }) {
   const [a, b] = TONES[Math.abs(tone) % TONES.length];
-  // A real uploaded photo wins over the color tile.
   if (src) {
     return (
       <img

@@ -1,6 +1,5 @@
 import { peso } from "../utils/price";
 
-// Shows nightly x nights, cleaning fee, service fee and total.
 export default function PriceBox({ price, serviceFeePercent = 10 }) {
   const rows = [
     [`${peso(price.nightlyRate)} x ${price.nights} night${price.nights === 1 ? "" : "s"}`, price.subtotal],

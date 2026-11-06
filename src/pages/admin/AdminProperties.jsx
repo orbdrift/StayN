@@ -10,7 +10,6 @@ import { peso } from "../../utils/price";
 
 const tabs = [["pending", "Pending"], ["approved", "Approved"], ["rejected", "Rejected"], ["inactive", "Hidden"]];
 
-// One document line: opens the uploaded file, or shows the name when it is only a sample.
 function DocLink({ label, doc }) {
   if (!doc) return <div style={{ color: "#B23A1B" }}>{label}: missing</div>;
   return <div>{label}: {doc.url ? <a href={doc.url} target="_blank" rel="noreferrer" style={{ color: "var(--primary)" }}>View</a> : <span title={doc.name}>on file</span>}</div>;
@@ -25,7 +24,6 @@ export default function AdminProperties() {
   const list = properties.filter((p) => p.status === tab);
   const idOf = (p) => applications.find((a) => a.id === p.hostId)?.idDocument || null;
   const feeOf = (p) => listingFees.find((f) => f.propertyId === p.id);
-  // A property can only be approved when both documents are on file.
   const docsOk = (p) => Boolean(p.titleDocument && idOf(p));
 
   return (

@@ -20,7 +20,6 @@ const blank = {
   lat: 14.1153, lng: 120.9621,
 };
 
-// Add and Edit share this form (Edit is prefilled). Edit waits for the property to load so the form starts filled in.
 export default function PropertyForm() {
   const { id } = useParams();
   const { ready } = useData();
@@ -35,10 +34,9 @@ function PropertyFormFields() {
   const navigate = useNavigate();
   const existing = id ? properties.find((p) => p.id === id) : null;
   const [f, setF] = useState(existing ? { ...blank, ...existing, maxPets: String(existing.maxPets || 0) } : blank);
-  // Photos are plain image URLs (sample photos are paths like /T1.jpg, uploads are data URLs), the same shape the cards and gallery read.
   const [images, setImages] = useState((existing?.images || []).map((img) => (typeof img === "string" ? img : img.url)));
   const [titleDoc, setTitleDoc] = useState(existing?.titleDocument || null);
-  const [idDoc, setIdDoc] = useState(null); // a new ID upload; the one already on file lives on the host application
+  const [idDoc, setIdDoc] = useState(null);
   const [pay, setPay] = useState({ gcashNumber: "", accountName: user?.name || "", pin: "" });
   const [photoError, setPhotoError] = useState("");
   const [error, setError] = useState("");
@@ -56,7 +54,6 @@ function PropertyFormFields() {
   };
   const toggleAmenity = (a) => setF({ ...f, amenities: f.amenities.includes(a) ? f.amenities.filter((x) => x !== a) : [...f.amenities, a] });
 
-  // Photos: checked one by one, then added until the limit is reached.
   const addPhotos = async (e) => {
     const files = [...e.target.files];
     e.target.value = "";
@@ -74,7 +71,6 @@ function PropertyFormFields() {
   const removePhoto = (i) => setImages((list) => list.filter((_, n) => n !== i));
   const makeCover = (i) => setImages((list) => [list[i], ...list.filter((_, n) => n !== i)]);
 
-  // Geocoding with the free OpenStreetMap search (Nominatim): one request per click, Philippines only.
   const findAddress = async () => {
     setPinNote("");
     if (!f.address.trim()) return setPinNote("Type the address first.");

@@ -1,6 +1,3 @@
-// Reads an uploaded file into { name, type, size, url } so it can be previewed and saved.
-// The free Firebase plan has no Cloud Storage, so the file is saved as text inside the Firestore document
-// (limit 1 MB per document). Photos are shrunk to about 900 px wide first; PDFs must be small.
 export const MAX_FILE_MB = 5;
 export const MAX_PDF_KB = 300;
 

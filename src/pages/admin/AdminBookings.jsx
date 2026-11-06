@@ -21,7 +21,7 @@ export default function AdminBookings() {
 
   const cancel = () => {
     setBookingStatus(cancelling.id, "cancelled", { cancelledBy: "admin" });
-    if (paymentOf(cancelling)) refundPayment(cancelling.id); // label only, no money moves
+    if (paymentOf(cancelling)) refundPayment(cancelling.id);
     setCancelling(null);
   };
 

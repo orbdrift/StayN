@@ -1,4 +1,3 @@
-// "2 adults, 1 kid, 1 pet". Older bookings only have a `guests` number.
 export function guestSummary(b) {
   if (b.adults === undefined) return `${b.guests} guest${b.guests === 1 ? "" : "s"}`;
   const parts = [`${b.adults} adult${b.adults === 1 ? "" : "s"}`];
@@ -7,7 +6,6 @@ export function guestSummary(b) {
   return parts.join(", ");
 }
 
-// Short text for the guest picker button: "3 guests, 1 pet" or "Add guests".
 export function guestLabel({ adults = 0, kids = 0, pets = 0 }) {
   const guests = adults + kids;
   const parts = [];
