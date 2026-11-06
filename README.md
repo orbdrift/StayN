@@ -1,6 +1,6 @@
 # StayN
 
-StayN ("Stay and Nest") is a simple Airbnb-like website for booking stays in the Philippines (Tagaytay, Cebu, Palawan, Siargao). It is a college project for IT 305W (Advance Web Applications).
+StayN ("Stay and Nest") is a simple Airbnb-like website for booking stays in the Philippines (Tagaytay, Cebu, Palawan, Siargao).
 
 Live site: https://stayn-4576a.web.app
 
@@ -11,8 +11,6 @@ Live site: https://stayn-4576a.web.app
 **Hosts** apply to become a host, add and edit listings (photos, documents, map pin, a listing fee), block dates on an availability calendar, accept or reject requests, and see reviews, earnings and monthly reports (CSV and print).
 
 **Admins** approve hosts and listings, manage users, monitor every reservation, moderate reviews, view reports, and change platform settings (fees, categories).
-
-Roles are enforced by Firestore security rules (`firestore.rules`), not only by the screens.
 
 ## Tech
 
