@@ -1,0 +1,139 @@
+rules_version = '2';
+
+// StayN security rules. The React pages hide what a user may not do; these rules enforce it.
+// Roles live in users/{uid}.role: guest, host, admin.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+    function userDoc(id) { return /databases/$(database)/documents/users/$(id); }
+    function hasRole(r) { return signedIn() && exists(userDoc(request.auth.uid)) && get(userDoc(request.auth.uid)).data.role == r; }
+    function isAdmin() { return hasRole('admin'); }
+    function isHost() { return hasRole('host'); }
+    function isVerified() { return signedIn() && exists(userDoc(request.auth.uid)) && get(userDoc(request.auth.uid)).data.emailVerified == true; }
+    function owns(field) { return signedIn() && resource.data[field] == request.auth.uid; }
+    function changed() { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    match /users/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin() || (signedIn() && request.auth.uid == userId
+        && request.resource.data.role == 'guest'
+        && request.resource.data.status == 'active'
+        && request.resource.data.emailVerified == false);
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == userId
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.status == resource.data.status
+        && (request.resource.data.emailVerified == resource.data.emailVerified
+            || (request.resource.data.emailVerified == true && request.auth.token.email_verified == true)));
+    }
+
+    match /hostApplications/{userId} {
+      allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
+      allow create: if isAdmin() || (signedIn() && request.auth.uid == userId && request.resource.data.status == 'pending');
+      allow update: if isAdmin() || (signedIn() && request.auth.uid == userId
+        && request.resource.data.status == resource.data.status);
+    }
+
+    match /properties/{propertyId} {
+      allow read: if resource.data.status == 'approved' || owns('hostId') || isAdmin();
+      allow create: if isAdmin() || (isHost() && request.resource.data.hostId == request.auth.uid
+        && request.resource.data.status == 'pending');
+      // A host may switch approved and inactive, but only the admin approves or rejects.
+      allow update: if isAdmin() || (isHost() && owns('hostId')
+        && request.resource.data.hostId == resource.data.hostId
+        && (request.resource.data.status == resource.data.status
+            || (resource.data.status in ['approved', 'inactive'] && request.resource.data.status in ['approved', 'inactive'])));
+      allow delete: if isAdmin() || (isHost() && owns('hostId'));
+    }
+
+    // Title documents: only the host and the admin can read them.
+    match /propertyDocs/{propertyId} {
+      allow read: if owns('hostId') || isAdmin();
+      allow create: if isAdmin() || (isHost() && request.resource.data.hostId == request.auth.uid);
+      allow update: if isAdmin() || (isHost() && owns('hostId') && request.resource.data.hostId == resource.data.hostId);
+      allow delete: if isAdmin() || (isHost() && owns('hostId'));
+    }
+
+    // One document per property listing its active stays. Anyone can check dates; the booking code keeps it in step.
+    match /availability/{propertyId} {
+      allow read: if true;
+      allow write: if signedIn();
+    }
+
+    match /bookings/{bookingId} {
+      allow read: if owns('guestId') || owns('hostId') || isAdmin();
+      allow create: if isAdmin() || (signedIn() && isVerified()
+        && request.resource.data.guestId == request.auth.uid
+        && request.resource.data.hostId != request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.reviewed == false
+        && get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.status == 'approved'
+        && get(/databases/$(database)/documents/properties/$(request.resource.data.propertyId)).data.hostId == request.resource.data.hostId);
+      allow update: if isAdmin()
+        // the host accepts or rejects a pending request
+        || (owns('hostId') && resource.data.status == 'pending'
+            && request.resource.data.status in ['awaiting_payment', 'rejected']
+            && changed().hasOnly(['status', 'updatedAt']))
+        // the guest cancels before paying
+        || (owns('guestId') && resource.data.status in ['pending', 'awaiting_payment']
+            && request.resource.data.status == 'cancelled'
+            && request.resource.data.cancelledBy == 'guest'
+            && changed().hasOnly(['status', 'updatedAt', 'cancelledBy']))
+        // the guest pays: the payment is saved in the same step
+        || (owns('guestId') && resource.data.status == 'awaiting_payment'
+            && request.resource.data.status == 'confirmed'
+            && existsAfter(/databases/$(database)/documents/payments/$(bookingId))
+            && changed().hasOnly(['status', 'updatedAt']))
+        // the guest marks the stay as reviewed
+        || (owns('guestId') && resource.data.status in ['confirmed', 'completed'] && changed().hasOnly(['reviewed']));
+    }
+
+    match /payments/{bookingId} {
+      allow read: if owns('guestId') || owns('hostId') || isAdmin();
+      allow create: if isAdmin() || (signedIn() && request.resource.data.guestId == request.auth.uid
+        && request.resource.data.status == 'paid'
+        && get(/databases/$(database)/documents/bookings/$(bookingId)).data.guestId == request.auth.uid
+        && get(/databases/$(database)/documents/bookings/$(bookingId)).data.status == 'awaiting_payment'
+        && request.resource.data.amount == get(/databases/$(database)/documents/bookings/$(bookingId)).data.total);
+      allow update: if isAdmin() && request.resource.data.status == 'refunded';
+    }
+
+    match /listingFees/{propertyId} {
+      allow read: if owns('hostId') || isAdmin();
+      allow create: if isAdmin() || (isHost() && request.resource.data.hostId == request.auth.uid && request.resource.data.status == 'paid');
+      allow update: if isAdmin();
+    }
+
+    // Reviews: anyone can read. Only the guest of a finished stay can write one (the document id is the booking id,
+    // so there is one review per booking). The admin can hide or delete any review.
+    match /reviews/{bookingId} {
+      allow read: if true;
+      allow create: if isAdmin() || (signedIn()
+        && request.resource.data.guestId == request.auth.uid
+        && request.resource.data.visible == true
+        && request.resource.data.rating is int && request.resource.data.rating >= 1 && request.resource.data.rating <= 5
+        && request.resource.data.comment is string && request.resource.data.comment.size() <= 500
+        && get(/databases/$(database)/documents/bookings/$(bookingId)).data.guestId == request.auth.uid
+        && get(/databases/$(database)/documents/bookings/$(bookingId)).data.status in ['confirmed', 'completed']
+        && request.time >= timestamp.date(
+             int(get(/databases/$(database)/documents/bookings/$(bookingId)).data.checkOut.split('-')[0]),
+             int(get(/databases/$(database)/documents/bookings/$(bookingId)).data.checkOut.split('-')[1]),
+             int(get(/databases/$(database)/documents/bookings/$(bookingId)).data.checkOut.split('-')[2])));
+      allow update: if isAdmin() || (owns('guestId') && changed().hasOnly(['rating', 'comment', 'edited']));
+      allow delete: if isAdmin() || owns('guestId');
+    }
+
+    // Notifications are written by the app for another user. Admin notices use userId 'admin'.
+    match /notifications/{noteId} {
+      allow read: if signedIn() && (resource.data.userId == request.auth.uid || (resource.data.userId == 'admin' && isAdmin()));
+      allow create: if isAdmin() || (signedIn() && request.resource.data.read == false);
+      allow update: if signedIn() && (resource.data.userId == request.auth.uid || (resource.data.userId == 'admin' && isAdmin()))
+        && changed().hasOnly(['read']);
+    }
+
+    match /settings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}
