@@ -16,8 +16,13 @@ export default function BecomeHost() {
   const [idType, setIdType] = useState("");
   const [idDoc, setIdDoc] = useState(null);
   const [agreed, setAgreed] = useState(false);
+  const [again, setAgain] = useState(false);
   const [error, setError] = useState("");
-  const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
+  const startAgain = () => {
+    setF({ fullName: application.fullName || user.name, phone: application.phone || user.phone, address: application.address || "", bio: application.bio || "" });
+    setIdType(""); setIdDoc(null); setAgreed(false); setError(""); setAgain(true);
+  };
+  const set =(k) => (e) => setF({ ...f, [k]: e.target.value });
 
   const submit = (e) => {
     e.preventDefault();
@@ -27,9 +32,10 @@ export default function BecomeHost() {
     if (!idDoc) return setError("Upload a clear photo of your valid ID.");
     if (!agreed) return setError("Please confirm that your details are true and agree to the host rules.");
     submitApplication(user.id, { ...f, idType, idDocument: idDoc, agreed: true });
+    setAgain(false);
   };
 
-  if (application) {
+  if (application && !(again && application.status === "rejected")) {
     const text = {
       pending: "Your application is with the StayN team. We will notify you when it is reviewed.",
       approved: "You are an approved host. You can add and manage properties.",
@@ -42,6 +48,8 @@ export default function BecomeHost() {
         <div className="panel">
           <Typography sx={{ fontWeight: 500, mb: 1 }}>Application status <StatusBadge status={application.status} /></Typography>
           <Typography color="text.secondary">{text}</Typography>
+          {application.status === "rejected" && application.rejectReason && <Typography sx={{ mt: 1 }}>Reason: {application.rejectReason}</Typography>}
+          {application.status === "rejected" && <Button variant="contained" sx={{ mt: 2 }} onClick={startAgain}>Apply again</Button>}
           {application.status === "approved" && <Button component={Link} to="/host" variant="contained" sx={{ mt: 2 }}>Go to dashboard</Button>}
         </div>
       </div>

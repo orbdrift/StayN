@@ -29,7 +29,8 @@ service cloud.firestore {
       allow read: if signedIn() && (request.auth.uid == userId || isAdmin());
       allow create: if isAdmin() || (signedIn() && request.auth.uid == userId && request.resource.data.status == 'pending');
       allow update: if isAdmin() || (signedIn() && request.auth.uid == userId
-        && request.resource.data.status == resource.data.status);
+        && (request.resource.data.status == resource.data.status
+          || (resource.data.status == 'rejected' && request.resource.data.status == 'pending')));
     }
 
     match /properties/{propertyId} {

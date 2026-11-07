@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Button, Tab, Tabs } from "@mui/material";
+import { Button, Tab, Tabs, TextField } from "@mui/material";
+import ConfirmDialog from "../../components/ConfirmDialog";
+import DocViewer from "../../components/DocViewer";
 import PageHeading from "../../components/PageHeading";
 import StatusBadge from "../../components/StatusBadge";
 import EmptyState from "../../components/EmptyState";
@@ -8,6 +10,8 @@ import { useData } from "../../context/DataContext";
 export default function AdminHosts() {
   const { applications, properties, setApplication, setPropertyStatus, updateApplication, updateUser } = useData();
   const [tab, setTab] = useState("applications");
+  const [rejecting, setRejecting] = useState(null);
+  const [reason, setReason] = useState("");
   const pending = applications.filter((a) => a.status === "pending");
   const hosts = applications.filter((a) => ["approved", "deactivated"].includes(a.status));
 
@@ -30,16 +34,15 @@ export default function AdminHosts() {
         pending.length === 0 ? <EmptyState title="No applications" message="New host applications will show up here." /> : (
           <div className="panel" style={{ padding: 0, overflowX: "auto" }}>
             <table className="table align-middle mb-0" style={{ minWidth: 900 }}>
-              <thead><tr><th style={{ paddingLeft: 20 }}>Applicant</th><th>Phone</th><th>Address</th><th>Bio</th><th>ID</th><th>House certificate</th><th style={{ paddingRight: 20 }}>Actions</th></tr></thead>
+              <thead><tr><th style={{ paddingLeft: 20 }}>Applicant</th><th>Phone</th><th>Address</th><th>Bio</th><th>ID</th><th style={{ paddingRight: 20 }}>Actions</th></tr></thead>
               <tbody>
                 {pending.map((a) => (
                   <tr key={a.id}>
                     <td style={{ paddingLeft: 20 }}>{a.fullName}</td><td>{a.phone}</td><td>{a.address}</td><td>{a.bio}</td>
-                    <td>{a.idDocument ? <>{a.idType && <div style={{ fontSize: 13 }}>{a.idType}</div>}<a href={a.idDocument.url || "#"} target={a.idDocument.url ? "_blank" : undefined} rel="noreferrer" style={{ color: "var(--primary)" }}>View ID</a></> : "—"}</td>
-                    <td>{a.houseCertificate ? <a href={a.houseCertificate.url || "#"} target={a.houseCertificate.url ? "_blank" : undefined} rel="noreferrer" style={{ color: "var(--primary)" }}>{a.houseCertificate.name}</a> : "—"}</td>
+                    <td>{a.idDocument ? <>{a.idType && <div style={{ fontSize: 13 }}>{a.idType}</div>}<DocViewer doc={a.idDocument} label="View ID" /></> : "—"}</td>
                     <td style={{ paddingRight: 20, whiteSpace: "nowrap" }}>
                       <Button size="small" variant="contained" disabled={!a.idDocument} title={a.idDocument ? "" : "No ID on file"} onClick={() => setApplication(a.id, "approved")}>Approve</Button>{" "}
-                      <Button size="small" variant="outlined" color="inherit" sx={{ borderColor: "var(--border)" }} onClick={() => setApplication(a.id, "rejected")}>Reject</Button>
+                      <Button size="small" variant="outlined" color="inherit" sx={{ borderColor: "var(--border)" }} onClick={() => { setRejecting(a); setReason(""); }}>Reject</Button>
                     </td>
                   </tr>
                 ))}
@@ -68,6 +71,18 @@ export default function AdminHosts() {
           </table>
         </div>
       )}
+
+      <ConfirmDialog
+        open={Boolean(rejecting)}
+        title={`Reject ${rejecting?.fullName}'s application?`}
+        confirmLabel="Reject application"
+        danger
+        confirmDisabled={!reason.trim()}
+        onClose={() => setRejecting(null)}
+        onConfirm={() => { setApplication(rejecting.id, "rejected", reason.trim()); setRejecting(null); }}
+      >
+        <TextField fullWidth multiline minRows={3} label="Reason (the applicant will see this)" value={reason} onChange={(e) => setReason(e.target.value)} sx={{ mt: 1 }} />
+      </ConfirmDialog>
     </>
   );
 }

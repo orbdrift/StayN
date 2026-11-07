@@ -5,6 +5,7 @@ import PageHeading from "../../components/PageHeading";
 import StatusBadge from "../../components/StatusBadge";
 import EmptyState from "../../components/EmptyState";
 import ConfirmDialog from "../../components/ConfirmDialog";
+import DocViewer from "../../components/DocViewer";
 import { useData } from "../../context/DataContext";
 import { peso } from "../../utils/price";
 
@@ -12,7 +13,7 @@ const tabs = [["pending", "Pending"], ["approved", "Approved"], ["rejected", "Re
 
 function DocLink({ label, doc }) {
   if (!doc) return <div style={{ color: "#B23A1B" }}>{label}: missing</div>;
-  return <div>{label}: {doc.url ? <a href={doc.url} target="_blank" rel="noreferrer" style={{ color: "var(--primary)" }}>View</a> : <span title={doc.name}>on file</span>}</div>;
+  return <div>{label}: <DocViewer doc={doc} /></div>;
 }
 
 export default function AdminProperties() {

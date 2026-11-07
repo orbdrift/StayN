@@ -117,14 +117,14 @@ export function DataProvider({ children }) {
         setDoc(doc(db, "hostApplications", userId), { userId, status: "pending", ...form, createdAt: todayISO() })
           .then(() => notifyAdmins("Host application", `${form.fullName} applied to become a host.`, "/admin/hosts")),
       ),
-      setApplication: (id, status) => guard(
+      setApplication: (id, status, reason = "") => guard(
         Promise.all([
-          updateDoc(doc(db, "hostApplications", id), { status, reviewedAt: todayISO() }),
+          updateDoc(doc(db, "hostApplications", id), { status, reviewedAt: todayISO(), ...(reason ? { rejectReason: reason } : {}) }),
           status === "approved" && updateDoc(doc(db, "users", id), { role: "host" }),
         ]).then(() => {
           if (status === "approved" || status === "rejected")
             notify(id, status === "approved" ? "You are a host" : "Application not approved",
-              status === "approved" ? "Your host application was approved. You can now add properties." : "Your host application was not approved.", "/become-host");
+              status === "approved" ? "Your host application was approved. You can now add properties." : `Your host application was not approved.${reason ? ` Reason: ${reason}` : ""} You can apply again.`, "/become-host");
         }),
       ),
       updateApplication: (id, changes) => guard(setDoc(doc(db, "hostApplications", id), changes, { merge: true })),

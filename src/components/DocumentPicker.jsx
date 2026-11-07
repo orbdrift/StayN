@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button, Typography } from "@mui/material";
 import { checkFile, readFile } from "../utils/files";
+import DocViewer from "./DocViewer";
 
 export default function DocumentPicker({ label, hint, value, onChange, error }) {
   const [problem, setProblem] = useState("");
@@ -22,7 +23,7 @@ export default function DocumentPicker({ label, hint, value, onChange, error }) 
       {value ? (
         <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
           <span style={{ fontSize: 14 }}>{value.name}</span>
-          {value.url && <a href={value.url} target="_blank" rel="noreferrer" style={{ color: "var(--primary)", fontSize: 14 }}>Preview</a>}
+          {value.url && <DocViewer doc={value} label="Preview" />}
           <Button size="small" color="error" onClick={() => onChange(null)}>Remove</Button>
         </div>
       ) : (
