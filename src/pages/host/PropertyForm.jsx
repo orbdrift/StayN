@@ -76,11 +76,24 @@ function PropertyFormFields() {
     if (!f.address.trim()) return setPinNote("Type the address first.");
     setFinding(true);
     try {
-      const q = encodeURIComponent(`${f.address}, ${f.destination || "Philippines"}`);
-      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ph&q=${q}`);
-      const rows = await res.json();
-      if (!rows.length) setPinNote("That address was not found. Click the map to place the pin yourself.");
-      else setF((cur) => ({ ...cur, lat: Number(rows[0].lat), lng: Number(rows[0].lon) }));
+      const parts = f.address.split(",").map((s) => s.trim()).filter(Boolean);
+      const tries = [f.address.trim()];
+      if (f.destination && !f.address.toLowerCase().includes(f.destination.toLowerCase())) tries.push(`${f.address.trim()}, ${f.destination}`);
+      for (let i = 1; i < parts.length && i <= 2; i++) tries.push(parts.slice(i).join(", "));
+      if (f.destination) tries.push(f.destination);
+      let found = null;
+      const unique = [...new Set(tries)].slice(0, 5);
+      for (let i = 0; i < unique.length && !found; i++) {
+        if (i > 0) await new Promise((r) => setTimeout(r, 1100));
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=ph&q=${encodeURIComponent(unique[i])}`);
+        const rows = await res.json();
+        if (rows.length) found = { row: rows[0], exact: i === 0 };
+      }
+      if (!found) setPinNote("That address was not found. Click the map to place the pin yourself.");
+      else {
+        setF((cur) => ({ ...cur, lat: Number(found.row.lat), lng: Number(found.row.lon) }));
+        if (!found.exact) setPinNote(`The pin was placed near ${found.row.display_name.split(",").slice(0, 2).join(",")}. Click the map to move it to the exact spot.`);
+      }
     } catch {
       setPinNote("Address search is not available right now. Click the map to place the pin.");
     }
