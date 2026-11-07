@@ -57,7 +57,9 @@ export function AuthProvider({ children }) {
   useEffect(() => { if (profile?.status === "suspended" && !loggingIn.current) signOut(auth); }, [profile?.status]);
 
   const loading = fbUser === undefined || (fbUser && profile === undefined);
-  const user = fbUser && profile ? { ...profile, id: fbUser.uid, emailVerified: Boolean(profile.emailVerified || fbUser.emailVerified) } : null;
+  const booted = useRef(false);
+  if (!loading) booted.current = true;
+  const user = fbUser && profile && profile.status !== "suspended" ? { ...profile, id: fbUser.uid, emailVerified: Boolean(profile.emailVerified || fbUser.emailVerified) } : null;
 
   const login = async (email, password) => {
     loggingIn.current = true;
@@ -128,12 +130,12 @@ export function AuthProvider({ children }) {
 
   const homePath = !user ? "/" : user.role === "admin" ? "/admin" : user.role === "host" ? "/host" : "/reservations";
 
-  if (loading) {
+  if (loading && !booted.current) {
     return <div style={{ minHeight: "60vh", display: "grid", placeItems: "center" }}><CircularProgress aria-label="Loading" /></div>;
   }
 
   return (
-    <AuthContext.Provider value={{ user, application, login, register, logout, changePassword, resetPassword, resendVerification, refreshVerification, homePath }}>
+    <AuthContext.Provider value={{ user, loading, application, login, register, logout, changePassword, resetPassword, resendVerification, refreshVerification, homePath }}>
       {children}
     </AuthContext.Provider>
   );

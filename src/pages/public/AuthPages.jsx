@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Alert, Button, Chip, TextField, Typography } from "@mui/material";
 import PasswordField from "../../components/PasswordField";
@@ -25,7 +25,7 @@ const demoAccounts = [
 const DEMO_PASSWORD = "Demo#1234";
 
 export function Login() {
-  const { login } = useAuth();
+  const { login, user, homePath } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [email, setEmail] = useState("");
@@ -33,15 +33,21 @@ export function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    if (!user) return;
+    const from = location.state?.from;
+    const guestPage = /^\/(reservations|profile|become-host)/.test(from || "");
+    navigate(from && !(guestPage && user.role !== "guest") ? from : homePath, { replace: true });
+  }, [user]);
+
   const enter = async (address, pass) => {
     setError("");
     setBusy(true);
     const result = await login(address, pass);
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    const u = result.user;
-    const home = u.role === "admin" ? "/admin" : u.role === "host" ? "/host" : "/reservations";
-    navigate(location.state?.from || home, { replace: true });
+    if (!result.ok) {
+      setBusy(false);
+      setError(result.error);
+    }
   };
 
   const submit = (e) => {
@@ -76,8 +82,9 @@ export function Login() {
 }
 
 export function Register() {
-  const { register } = useAuth();
+  const { register, user, homePath } = useAuth();
   const navigate = useNavigate();
+  useEffect(() => { if (user) navigate(homePath, { replace: true }); }, [user]);
   const [f, setF] = useState({ name: "", email: "", phone: "", password: "", confirm: "" });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);

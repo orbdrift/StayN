@@ -21,6 +21,10 @@ export default function Header() {
   const [navAnchor, setNavAnchor] = useState(null);
   const [userAnchor, setUserAnchor] = useState(null);
   const unread = user ? notifications.filter((n) => n.userId === user.id && !n.read).length : 0;
+  const roleLink = user?.role === "admin" ? { to: "/admin", label: "Dashboard" }
+    : user?.role === "host" ? { to: "/host", label: "Dashboard" }
+    : user ? { to: "/reservations", label: "My Reservations" } : null;
+  const navLinks = roleLink ? [...links, roleLink] : links;
 
   const profilePath = user?.role === "host" ? "/host/profile" : user?.role === "admin" ? null : "/profile";
   const homeLabel = user?.role === "guest" ? "My Reservations" : "Dashboard";
@@ -35,7 +39,7 @@ export default function Header() {
             <MenuIcon />
           </IconButton>
           <Menu anchorEl={navAnchor} open={Boolean(navAnchor)} onClose={() => setNavAnchor(null)}>
-            {links.map((l) => (
+            {navLinks.map((l) => (
               <MenuItem key={l.to} component={Link} to={l.to} onClick={() => setNavAnchor(null)}>{l.label}</MenuItem>
             ))}
           </Menu>
@@ -43,7 +47,7 @@ export default function Header() {
         </div>
 
         <nav className="site-nav">
-          {links.map((l) => (
+          {navLinks.map((l) => (
             <NavLink key={l.to} to={l.to} end={l.to === "/"}>{l.label}</NavLink>
           ))}
         </nav>
