@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Alert, Button, Chip, TextField, Typography } from "@mui/material";
+import { Alert, Button, TextField, Typography } from "@mui/material";
 import PasswordField from "../../components/PasswordField";
 import { useAuth } from "../../context/AuthContext";
 
@@ -15,14 +15,6 @@ function AuthCard({ title, subtitle, children }) {
     </div>
   );
 }
-
-const demoAccounts = [
-  { label: "Guest (Ana)", email: "ana@stayn.test" },
-  { label: "Guest, unverified (Carla)", email: "carla@stayn.test" },
-  { label: "Host (Maria)", email: "maria.host@stayn.test" },
-  { label: "Admin", email: "admin@stayn.test" },
-];
-const DEMO_PASSWORD = "Demo#1234";
 
 export function Login() {
   const { login, user, homePath } = useAuth();
@@ -70,13 +62,6 @@ export function Login() {
       <Typography align="center" color="text.secondary" sx={{ mt: 2 }}>
         New to StayN? <Link to="/register" style={{ color: "var(--primary)", textDecoration: "none" }}>Sign up</Link>
       </Typography>
-
-      <div style={{ marginTop: 24, paddingTop: 16, borderTop: "1px dashed var(--border)" }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>Demo accounts: tap one to sign in as a sample user.</Typography>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {demoAccounts.map((a) => <Chip key={a.email} label={a.label} variant="outlined" disabled={busy} onClick={() => enter(a.email, DEMO_PASSWORD)} />)}
-        </div>
-      </div>
     </AuthCard>
   );
 }

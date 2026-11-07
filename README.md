@@ -27,7 +27,7 @@ The `server` folder is not used by the website.
 
 ## Demo accounts
 
-The Login page has one-click demo buttons (Guest, Guest unverified, Host, Admin). Sample accounts use `.test` emails, which cannot receive mail; use a real email to try email verification and password reset.
+The site has sample accounts for a guest, a host and an admin (emails ending in `@stayn.test`). Their passwords are given separately by the team and are not in this repository. Sample accounts use `.test` emails, which cannot receive mail; use a real email to try email verification and password reset.
 
 ## Put it online (Firebase Hosting)
 
