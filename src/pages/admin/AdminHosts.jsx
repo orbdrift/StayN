@@ -35,10 +35,10 @@ export default function AdminHosts() {
                 {pending.map((a) => (
                   <tr key={a.id}>
                     <td style={{ paddingLeft: 20 }}>{a.fullName}</td><td>{a.phone}</td><td>{a.address}</td><td>{a.bio}</td>
-                    <td>{a.idDocument ? <a href={a.idDocument.url || "#"} target={a.idDocument.url ? "_blank" : undefined} rel="noreferrer" style={{ color: "var(--primary)" }}>{a.idDocument.name}</a> : "—"}</td>
+                    <td>{a.idDocument ? <>{a.idType && <div style={{ fontSize: 13 }}>{a.idType}</div>}<a href={a.idDocument.url || "#"} target={a.idDocument.url ? "_blank" : undefined} rel="noreferrer" style={{ color: "var(--primary)" }}>View ID</a></> : "—"}</td>
                     <td>{a.houseCertificate ? <a href={a.houseCertificate.url || "#"} target={a.houseCertificate.url ? "_blank" : undefined} rel="noreferrer" style={{ color: "var(--primary)" }}>{a.houseCertificate.name}</a> : "—"}</td>
                     <td style={{ paddingRight: 20, whiteSpace: "nowrap" }}>
-                      <Button size="small" variant="contained" onClick={() => setApplication(a.id, "approved")}>Approve</Button>{" "}
+                      <Button size="small" variant="contained" disabled={!a.idDocument} title={a.idDocument ? "" : "No ID on file"} onClick={() => setApplication(a.id, "approved")}>Approve</Button>{" "}
                       <Button size="small" variant="outlined" color="inherit" sx={{ borderColor: "var(--border)" }} onClick={() => setApplication(a.id, "rejected")}>Reject</Button>
                     </td>
                   </tr>
